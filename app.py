@@ -3,13 +3,26 @@ from flask import Flask, render_template, request, jsonify, session, redirect, u
 from scipy.stats import norm
 import numpy as np
 import datetime
+import json
+import os
 from functools import wraps
 
 app = Flask(__name__)
-app.secret_key = 'some_really_strong_secret_key_here' # 必须设置密钥以使用 session
 
-USERNAME = 'admin' # 请根据需要修改
-PASSWORD = 'password123' # 请根据需要修改
+# 获取当前脚本所在目录，确保能找到 config.json
+basedir = os.path.abspath(os.path.dirname(__file__))
+config_path = os.path.join(basedir, 'config.json')
+
+# 尝试加载配置信息
+if os.path.exists(config_path):
+    with open(config_path, 'r', encoding='utf-8') as f:
+        config = json.load(f)
+else:
+    config = {}
+
+app.secret_key = config.get('SECRET_KEY', 'some_really_strong_secret_key_here')
+USERNAME = config.get('USERNAME', 'admin')
+PASSWORD = config.get('PASSWORD', 'password123')
 
 # --- 登录验证装饰器 ---
 def login_required(f):
