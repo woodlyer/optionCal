@@ -1,10 +1,25 @@
 # app.py (保持不变)
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, jsonify, session, redirect, url_for, flash
 from scipy.stats import norm
 import numpy as np
 import datetime
+from functools import wraps
 
 app = Flask(__name__)
+app.secret_key = 'some_really_strong_secret_key_here' # 必须设置密钥以使用 session
+
+USERNAME = 'admin' # 请根据需要修改
+PASSWORD = 'password123' # 请根据需要修改
+
+# --- 登录验证装饰器 ---
+def login_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if 'logged_in' not in session:
+            flash('请先登录。', 'warning')
+            return redirect(url_for('login'))
+        return f(*args, **kwargs)
+    return decorated_function
 
 # --- Black-Scholes 期权定价模型 ---
 def black_scholes(S, K, T, r, sigma, option_type):
