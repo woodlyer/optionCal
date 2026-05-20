@@ -1,0 +1,5 @@
+{
+    "USERNAME": "admin",
+    "PASSWORD": "password",
+    "SECRET_KEY": "your_very_secret_key_here_change_this_in_production"
+}

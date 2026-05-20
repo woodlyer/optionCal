@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GLD 价格与期权分析</title>
+    
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script> 
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 10px;
+            background-color: #f4f4f4;
+            color: #333;
+        }
+        .container {
+            max-width: 1200px;
+            margin: auto;
+            background-color: #fff;
+            padding: 15px 25px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            color: #0056b3;
+            text-align: center;
+            margin: 0 0 15px 0;
+            font-size: 24px;
+        }
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .controls h2 {
+            margin: 0;
+            font-size: 18px;
+        }
+        #addOption {
+            background-color: #28a745;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        #addOption:hover {
+            background-color: #218838;
+        }
+        .option-inputs {
+            border: 1px solid #ddd;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+            background-color: #f9f9f9;
+        }
+        .option-row {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr) auto; /* 到期日, 行权价, 波动率, 期权类型, 计算日期, 删除 */
+            gap: 10px;
+            align-items: center;
+            margin-bottom: 10px;
+            padding-bottom: 10px;
+            border-bottom: 1px dashed #eee;
+        }
+        .option-row:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+        .option-row label {
+            font-weight: bold;
+            margin-bottom: 5px;
+            display: block;
+        }
+        .option-row input[type="date"],
+        .option-row input[type="number"],
+        .option-row select {
+            width: calc(100% - 10px); /* Adjust width for padding/border */
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .delete-option {
+            background-color: #dc3545;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .delete-option:hover {
+            background-color: #c82333;
+        }
+        .chart-container {
+            width: 100%;
+            height: 500px; /* 默认高度，后面会通过全屏按钮调整 */
+            background-color: #fff;
+            padding: 0px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            position: relative; /* Added for fullscreen button positioning */
+        }
+        .calculate-button-container {
+            text-align: center;
+            margin-top: 15px;
+        }
+        #calculateCurves {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            margin: 0 5px;
+        }
+        #calculateCurves:hover {
+            background-color: #0069d9;
+        }
+        /* 隐藏不再需要的 GLD 日期范围部分 */
+        .gld-date-range {
+            display: none; 
+        }
+        .chart-actions {
+            text-align: right;
+            margin-top: 5px;
+            margin-bottom: 10px;
+        }
+        .chart-actions button {
+            background-color: #6c757d;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            margin: 0 5px;
+        }
+        .chart-actions button:hover {
+            background-color: #5a6268;
+        }
+        .global-params {
+            margin-bottom: 15px;
+            padding: 10px 15px;
+            border: 1px solid #e0e0e0;
+            border-radius: 5px;
+            background-color: #f0f0f0;
+            display: flex;
+            align-items: center;
+        }
+        .global-params h3 {
+            margin: 0 20px 0 0;
+            font-size: 16px;
+        }
+        .global-params label {
+            margin-right: 10px;
+            font-weight: bold;
+        }
+        .global-params input[type="number"] {
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 14px;
+            width: 100px;
+        }
+
+        /* Fullscreen styles */
+        .chart-container.fullscreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw; /* 视口宽度 */
+            height: 100vh; /* 视口高度 */
+            padding: 0;
+            margin: 0;
+            z-index: 1000; /* Ensure it's on top */
+            background-color: #fff; /* or any background for fullscreen */
+            border-radius: 0;
+            box-shadow: none;
+        }
+
+        /* Fullscreen Exit Button styles */
+        #exitFullscreenButton {
+            position: fixed; /* Fixed position so it stays visible */
+            top: 20px;
+            right: 20px;
+            background-color: #dc3545; /* Red color for exit */
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            z-index: 1001; /* Higher than chart container */
+            display: none; /* Hidden by default */
+        }
+        #exitFullscreenButton:hover {
+            background-color: #c82333;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>GLD 价格与期权分析工具</h1>
+
+        <div class="global-params">
+            <h3>全局参数</h3>
+            <label for="riskFreeRate">无风险利率:</label>
+            <input type="number" id="riskFreeRate" step="0.001" value="0.042197" required>
+        </div>
+
+        <div class="gld-date-range">
+            <h3>GLD 历史价格日期范围 (模拟)</h3>
+            <label for="gldStartDate">开始日期:</label>
+            <input type="date" id="gldStartDate" required>
+            <label for="gldEndDate" style="margin-left: 20px;">结束日期:</label>
+            <input type="date" id="gldEndDate" required>
+        </div>
+
+        <div class="controls">
+            <h2>期权参数设置</h2>
+            <button id="addOption">添加期权</button>
+        </div>
+
+        <div id="optionInputs" class="option-inputs">
+            </div>
+
+        <!-- <h2 style="margin: 15px 0 5px 0; font-size: 18px; text-align: center;">曲线图分析</h2> -->
+        <div class="chart-actions">
+            <button id="resetChart">重置图表</button> 
+            <button id="toggleFullscreen">全屏显示</button> 
+            <button id="calculateCurves">计算并绘制曲线</button>
+        </div>
+        <div class="chart-container">
+            <div id="priceChart" style="width: 100%; height: 100%;"></div> 
+            <button id="exitFullscreenButton" style="display: none;">退出全屏</button>
+        </div>
+    </div>
+
+    <script>
+        const addOptionButton = document.getElementById('addOption');
+        const optionInputsContainer = document.getElementById('optionInputs');
+        const calculateCurvesButton = document.getElementById('calculateCurves');
+        const resetChartButton = document.getElementById('resetChart'); 
+        const toggleFullscreenButton = document.getElementById('toggleFullscreen'); 
+        const exitFullscreenButton = document.getElementById('exitFullscreenButton'); // 获取新的退出全屏按钮
+        const riskFreeRateInput = document.getElementById('riskFreeRate'); 
+        const chartContainer = document.querySelector('.chart-container'); 
+
+        const chartDom = document.getElementById('priceChart'); 
+        let myChart = echarts.init(chartDom); 
+
+        let optionCounter = 0; 
+
+        function formatDate(date) {
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+
+        function addOptionRow() {
+            optionCounter++;
+            const optionRow = document.createElement('div');
+            optionRow.classList.add('option-row');
+            optionRow.setAttribute('data-option-id', optionCounter);
+
+            const defaultExpiryDate = new Date('2027-01-15'); 
+            const defaultCalcDate = new Date(); 
+            //defaultCalcDate.setFullYear(2025, 5, 28); 
+
+            optionRow.innerHTML = `
+                <div>
+                    <label for="expiryDate-${optionCounter}">到期日:</label>
+                    <input type="date" id="expiryDate-${optionCounter}" value="${formatDate(defaultExpiryDate)}" required>
+                </div>
+                <div>
+                    <label for="strikePrice-${optionCounter}">行权价:</label>
+                    <input type="number" id="strikePrice-${optionCounter}" step="1" min="0" value="450" required>
+                </div>
+                <div>
+                    <label for="volatility-${optionCounter}">波动率 (%):</label>
+                    <input type="number" id="volatility-${optionCounter}" step="0.1" min="0.0" value="25" required>
+                </div>
+                <div>
+                    <label for="optionType-${optionCounter}">期权类型:</label>
+                    <select id="optionType-${optionCounter}">
+                        <option value="call">看涨 (Call)</option>
+                        <option value="put">看跌 (Put)</option>
+                    </select>
+                </div>
+                 <div>
+                    <label for="calculationDate-${optionCounter}">计算日期:</label>
+                    <input type="date" id="calculationDate-${optionCounter}" value="${formatDate(defaultCalcDate)}" required>
+                </div>
+                <div>
+                    <label>&nbsp;</label>
+                    <button class="delete-option" data-option-id="${optionCounter}">删除</button>
+                </div>
+            `;
+            optionInputsContainer.appendChild(optionRow);
+
+            optionRow.querySelector('.delete-option').addEventListener('click', function() {
+                optionRow.remove();
+                if (optionInputsContainer.children.length === 0) {
+                    addOptionRow(); 
+                }
+            });
+        }
+
+        addOptionRow();
+
+        addOptionButton.addEventListener('click', addOptionRow);
+
+        calculateCurvesButton.addEventListener('click', async function() {
+            const options = [];
+            document.querySelectorAll('.option-row').forEach(row => {
+                const id = row.getAttribute('data-option-id');
+                options.push({
+                    expiryDate: document.getElementById(`expiryDate-${id}`).value,
+                    strikePrice: parseFloat(document.getElementById(`strikePrice-${id}`).value),
+                    volatility: parseFloat(document.getElementById(`volatility-${id}`).value),
+                    calculationDate: document.getElementById(`calculationDate-${id}`).value,
+                    optionType: document.getElementById(`optionType-${id}`).value
+                });
+            });
+
+            const riskFreeRate = parseFloat(riskFreeRateInput.value); 
+
+            try {
+                const response = await fetch('/calculate_option_prices', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ 
+                        options: options,
+                        riskFreeRate: riskFreeRate 
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+
+                const option = {
+                    tooltip: {
+                        trigger: 'axis',
+                        formatter: function(params) {
+                            let res = 'GLD 价格: ' + params[0].value[0] + '<br/>';
+                            params.forEach(item => {
+                                res += item.marker + item.seriesName + ': ' + item.value[1].toFixed(2) + '<br/>';
+                            });
+                            return res;
+                        },
+                        axisPointer: {
+                            type: 'cross'
+                        }
+                    },
+                    xAxis: {
+                        type: 'value',
+                        name: 'GLD 价格',
+                        axisLabel: {
+                            formatter: '{value}'
+                        }
+                    },
+                    yAxis: {
+                        type: 'value',
+                        name: '期权价格',
+			                  min: -20,
+                        axisLabel: {
+                            formatter: '{value}'
+                        }
+                    },
+                    grid: {
+                        left: '3%',
+                        right: '4%',
+                        bottom: '10%', 
+                        containLabel: true
+                    },
+                    dataZoom: [
+                        {
+                            type: 'inside', 
+                            xAxisIndex: [0],
+                            filterMode: 'none',
+                            zoomOnMouseWheel: true, 
+                            moveOnMouseMove: true, 
+                            moveOnMouseWheel: false 
+                        },
+                        {
+                            type: 'inside',
+                            yAxisIndex: [0], 
+                            filterMode: 'none',
+                            zoomOnMouseWheel: true,
+                            moveOnMouseMove: true, 
+                            moveOnMouseWheel: false
+                        }
+                    ],
+                    series: data.datasets.map(d => ({
+                        name: d.label, 
+                        type: d.type,
+                        smooth: d.smooth,
+                        data: d.data,
+                        lineStyle: d.lineStyle
+                    }))
+                };
+
+                myChart.setOption(option, true); 
+                
+                window.addEventListener('resize', function() {
+                    myChart.resize();
+                });
+
+            } catch (error) {
+                console.error('计算曲线时出错:', error);
+                alert('计算曲线时出错。请检查控制台获取更多信息。');
+            }
+        });
+
+        resetChartButton.addEventListener('click', () => {
+            calculateCurvesButton.click(); 
+        });
+
+        // --- 全屏功能及退出 ---
+        function toggleFullscreen(isExit = false) {
+            if (chartContainer.classList.contains('fullscreen') || isExit) {
+                // 当前是全屏，或者强制退出
+                chartContainer.classList.remove('fullscreen');
+                exitFullscreenButton.style.display = 'none'; // 隐藏退出按钮
+                toggleFullscreenButton.textContent = '全屏显示'; // 切换主按钮文本
+            } else {
+                // 当前不是全屏，进行全屏
+                chartContainer.classList.add('fullscreen');
+                exitFullscreenButton.style.display = 'block'; // 显示退出按钮
+                toggleFullscreenButton.textContent = '退出全屏'; // 切换主按钮文本
+            }
+            myChart.resize(); // 调整图表大小
+        }
+
+        // 绑定全屏按钮点击事件
+        toggleFullscreenButton.addEventListener('click', () => toggleFullscreen());
+        // 绑定浮动退出全屏按钮点击事件
+        exitFullscreenButton.addEventListener('click', () => toggleFullscreen(true));
+
+        // 监听键盘事件，按 ESC 键退出全屏
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape' && chartContainer.classList.contains('fullscreen')) {
+                toggleFullscreen(true); // 强制退出全屏
+            }
+        });
+
+        // ECharts 默认全屏事件，当用户点击 ECharts 内部的全屏按钮时触发
+        // 不过我们这里是自定义的全屏，所以这个监听器主要是为了兼容性或调试
+        document.addEventListener('fullscreenchange', () => {
+             // 如果浏览器原生全屏状态改变，且当前不是我们自定义的全屏状态，
+             // 或者用户通过其他方式退出了原生全屏，我们也要同步状态
+            if (!document.fullscreenElement && chartContainer.classList.contains('fullscreen')) {
+                toggleFullscreen(true);
+            }
+        });
+
+
+        // Trigger an initial calculation and plot when the page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            calculateCurvesButton.click();
+        });
+    </script>
+</body>
+</html>
