@@ -222,15 +222,30 @@
         }
 
         .option-row {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)) 44px;
+            display: flex;
+            flex-wrap: wrap;
             gap: 12px;
-            align-items: center;
+            align-items: flex-end;
             background-color: #f8fafc;
             padding: 12px 14px;
             border-radius: 8px;
             border: 1px solid #e2e8f0;
             position: relative;
+        }
+
+        .option-row > div {
+            flex: 1 1 120px;
+            min-width: 120px;
+        }
+
+        .option-row > div.action-btn-col {
+            flex: 0 0 auto;
+            min-width: auto;
+        }
+
+        .option-row > div.delete-btn-col {
+            flex: 0 0 auto;
+            min-width: auto;
         }
 
         .option-row label {
@@ -440,10 +455,6 @@
                     <span class="card-title">📝 BTC 期权合约组合参数设置</span>
                     <span style="font-size: 12px; color: #64748b;">设置到期日、行权价 ($50,000 - $160,000) 及波动率</span>
                 </div>
-                <div style="display: flex; gap: 8px; align-items: center;">
-                    <button id="addOption" class="btn-success">＋ 添加 BTC 期权</button>
-                    <button id="calculateCurves" class="btn-primary">⚡ 计算并绘制 BTC 曲线</button>
-                </div>
             </div>
 
             <div class="global-params-bar">
@@ -475,9 +486,7 @@
     </main>
 
     <script>
-        const addOptionButton = document.getElementById('addOption');
         const optionInputsContainer = document.getElementById('optionInputs');
-        const calculateCurvesButton = document.getElementById('calculateCurves');
         const resetChartButton = document.getElementById('resetChart');
         const toggleFullscreenButton = document.getElementById('toggleFullscreen');
         const exitFullscreenButton = document.getElementById('exitFullscreenButton');
@@ -496,58 +505,7 @@
             return `${year}-${month}-${day}`;
         }
 
-        function addOptionRow() {
-            optionCounter++;
-            const optionRow = document.createElement('div');
-            optionRow.classList.add('option-row');
-            optionRow.setAttribute('data-option-id', optionCounter);
-
-            const defaultExpiryDate = new Date('2026-08-29');
-            const defaultCalcDate = new Date();
-
-            optionRow.innerHTML = `
-                <div>
-                    <label for="expiryDate-${optionCounter}">到期日</label>
-                    <input type="date" id="expiryDate-${optionCounter}" value="${formatDate(defaultExpiryDate)}" required>
-                </div>
-                <div>
-                    <label for="strikePrice-${optionCounter}">行权价 ($)</label>
-                    <input type="number" id="strikePrice-${optionCounter}" step="1000" min="0" value="80000" required>
-                </div>
-                <div>
-                    <label for="volatility-${optionCounter}">波动率 (%)</label>
-                    <input type="number" id="volatility-${optionCounter}" step="0.01" min="0.000001" value="38.26" required>
-                </div>
-                <div>
-                    <label for="optionType-${optionCounter}">期权类型</label>
-                    <select id="optionType-${optionCounter}">
-                        <option value="call">看涨 (Call)</option>
-                        <option value="put">看跌 (Put)</option>
-                    </select>
-                </div>
-                <div>
-                    <label for="calculationDate-${optionCounter}">计算基准日</label>
-                    <input type="date" id="calculationDate-${optionCounter}" value="${formatDate(defaultCalcDate)}" required>
-                </div>
-                <div>
-                    <button class="delete-option" data-option-id="${optionCounter}" title="删除此期权">✕</button>
-                </div>
-            `;
-            optionInputsContainer.appendChild(optionRow);
-
-            optionRow.querySelector('.delete-option').addEventListener('click', function() {
-                optionRow.remove();
-                if (optionInputsContainer.children.length === 0) {
-                    addOptionRow();
-                }
-            });
-        }
-
-        addOptionRow();
-
-        addOptionButton.addEventListener('click', addOptionRow);
-
-        calculateCurvesButton.addEventListener('click', async function() {
+        async function calculateCurves() {
             const options = [];
             document.querySelectorAll('.option-row').forEach(row => {
                 const id = row.getAttribute('data-option-id');
@@ -654,10 +612,79 @@
                 console.error('计算曲线时出错:', error);
                 alert('计算 BTC 期权曲线时出错，请检查后重试。');
             }
-        });
+        }
+
+        function addOptionRow() {
+            optionCounter++;
+            const isFirst = (optionInputsContainer.children.length === 0);
+            const optionRow = document.createElement('div');
+            optionRow.classList.add('option-row');
+            optionRow.setAttribute('data-option-id', optionCounter);
+
+            const defaultExpiryDate = new Date('2026-08-29');
+            const defaultCalcDate = new Date();
+
+            let actionsHTML = '';
+            if (isFirst) {
+                actionsHTML = `
+                    <div class="action-btn-col" style="display: flex; gap: 8px; align-items: flex-end;">
+                        <button id="addOption" class="btn-success" style="height: 36px; white-space: nowrap;">＋ 添加 BTC 期权</button>
+                        <button id="calculateCurves" class="btn-primary" style="height: 36px; white-space: nowrap;">⚡ 计算并绘制 BTC 曲线</button>
+                    </div>
+                `;
+            } else {
+                actionsHTML = `
+                    <div class="delete-btn-col" style="display: flex; align-items: flex-end;">
+                        <button class="delete-option" data-option-id="${optionCounter}" title="删除此期权">✕</button>
+                    </div>
+                `;
+            }
+
+            optionRow.innerHTML = `
+                <div>
+                    <label for="expiryDate-${optionCounter}">到期日</label>
+                    <input type="date" id="expiryDate-${optionCounter}" value="${formatDate(defaultExpiryDate)}" required>
+                </div>
+                <div>
+                    <label for="strikePrice-${optionCounter}">行权价 ($)</label>
+                    <input type="number" id="strikePrice-${optionCounter}" step="1000" min="0" value="80000" required>
+                </div>
+                <div>
+                    <label for="volatility-${optionCounter}">波动率 (%)</label>
+                    <input type="number" id="volatility-${optionCounter}" step="0.01" min="0.000001" value="38.26" required>
+                </div>
+                <div>
+                    <label for="optionType-${optionCounter}">期权类型</label>
+                    <select id="optionType-${optionCounter}">
+                        <option value="call">看涨 (Call)</option>
+                        <option value="put">看跌 (Put)</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="calculationDate-${optionCounter}">计算基准日</label>
+                    <input type="date" id="calculationDate-${optionCounter}" value="${formatDate(defaultCalcDate)}" required>
+                </div>
+                ${actionsHTML}
+            `;
+            optionInputsContainer.appendChild(optionRow);
+
+            if (isFirst) {
+                document.getElementById('addOption').addEventListener('click', addOptionRow);
+                document.getElementById('calculateCurves').addEventListener('click', calculateCurves);
+            } else {
+                optionRow.querySelector('.delete-option').addEventListener('click', function() {
+                    optionRow.remove();
+                    if (optionInputsContainer.children.length === 0) {
+                        addOptionRow();
+                    }
+                });
+            }
+        }
+
+        addOptionRow();
 
         resetChartButton.addEventListener('click', () => {
-            calculateCurvesButton.click();
+            calculateCurves();
         });
 
         function toggleFullscreen(isExit = false) {
