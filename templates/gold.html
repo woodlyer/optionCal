@@ -1,0 +1,1040 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>黄金价格换算中心 (XAU / GLD / 人民币克价)</title>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
+    <style>
+        :root {
+            --primary: #d97706;
+            --primary-hover: #b45309;
+            --primary-light: #fef3c7;
+            --sidebar-bg: #0f172a;
+            --sidebar-hover: #1e293b;
+            --bg-body: #f8fafc;
+            --card-bg: #ffffff;
+            --border-color: #e2e8f0;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --sidebar-width: 240px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* 左侧固定导航栏 Navigation */
+        .sidebar {
+            width: var(--sidebar-width);
+            background-color: var(--sidebar-bg);
+            color: #fff;
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            z-index: 100;
+            box-shadow: 4px 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .sidebar-brand {
+            padding: 20px 18px;
+            font-size: 17px;
+            font-weight: 700;
+            color: #fbbf24;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .sidebar-menu {
+            list-style: none;
+            padding: 16px 10px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 11px 14px;
+            color: #94a3b8;
+            text-decoration: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        .nav-link:hover {
+            color: #ffffff;
+            background-color: var(--sidebar-hover);
+        }
+
+        .nav-link.active {
+            color: #ffffff;
+            background-color: var(--primary);
+            font-weight: 600;
+        }
+
+        .sidebar-footer {
+            padding: 16px;
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .logout-link {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            width: 100%;
+            padding: 10px;
+            background-color: rgba(239, 68, 68, 0.15);
+            color: #fca5a5;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            border-radius: 8px;
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .logout-link:hover {
+            background-color: #ef4444;
+            color: white;
+        }
+
+        /* 右侧主体内容 */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            flex: 1;
+            padding: 24px;
+            max-width: calc(100vw - var(--sidebar-width));
+        }
+
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .page-title h1 {
+            font-size: 22px;
+            font-weight: 800;
+            color: #0f172a;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .page-title p {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        .badge-rate {
+            display: inline-block;
+            background-color: #fef3c7;
+            color: #b45309;
+            padding: 2px 10px;
+            border-radius: 9999px;
+            font-weight: 600;
+            font-size: 13px;
+            border: 1px solid #fde68a;
+        }
+
+        /* 网格布局 */
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        @media (min-width: 900px) {
+            .grid-2 {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
+            border: 1px solid var(--border-color);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        .card-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: #0f172a;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* 换算输入组 */
+        .converter-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 16px;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            position: relative;
+        }
+
+        .input-group label {
+            font-size: 13px;
+            font-weight: 600;
+            color: #334155;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .input-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .input-field {
+            width: 100%;
+            padding: 10px 45px 10px 12px;
+            font-size: 16px;
+            font-weight: 600;
+            border: 2px solid #cbd5e1;
+            border-radius: 8px;
+            outline: none;
+            transition: all 0.2s ease;
+            background-color: #fff;
+            color: #0f172a;
+        }
+
+        .input-field:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(217, 119, 6, 0.15);
+        }
+
+        .input-field.last-modified {
+            border-color: #d97706;
+            background-color: #fffbeb;
+        }
+
+        .input-unit {
+            position: absolute;
+            right: 12px;
+            font-size: 13px;
+            font-weight: 600;
+            color: #64748b;
+            pointer-events: none;
+        }
+
+        .sub-info {
+            font-size: 11px;
+            color: #64748b;
+            margin-top: 2px;
+        }
+
+        /* 参数设置栏 */
+        .params-bar {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 14px;
+            background-color: #f8fafc;
+            padding: 14px;
+            border-radius: 8px;
+            border: 1px dashed #cbd5e1;
+        }
+
+        .param-item label {
+            font-size: 12px;
+            font-weight: 600;
+            color: #475569;
+            margin-bottom: 4px;
+            display: block;
+        }
+
+        .param-item input {
+            width: 100%;
+            padding: 6px 10px;
+            font-size: 14px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            font-weight: 600;
+        }
+
+        /* 计算器组件 */
+        .calc-row {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            margin-bottom: 14px;
+            flex-wrap: wrap;
+        }
+
+        .calc-row input, .calc-row select {
+            padding: 8px 12px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        .result-box {
+            background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+            border: 1px solid #fde68a;
+            border-radius: 8px;
+            padding: 16px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 12px;
+            text-align: center;
+        }
+
+        .result-item {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .result-label {
+            font-size: 12px;
+            color: #b45309;
+            font-weight: 600;
+        }
+
+        .result-value {
+            font-size: 20px;
+            font-weight: 800;
+            color: #78350f;
+        }
+
+        /* 表格与图表 */
+        .tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+            border-bottom: 1px solid #e2e8f0;
+            padding-bottom: 8px;
+        }
+
+        .tab-btn {
+            padding: 8px 16px;
+            border: none;
+            background: none;
+            font-size: 14px;
+            font-weight: 600;
+            color: #64748b;
+            cursor: pointer;
+            border-radius: 6px;
+        }
+
+        .tab-btn.active {
+            background-color: var(--primary);
+            color: white;
+        }
+
+        .table-responsive {
+            overflow-x: auto;
+            max-height: 450px;
+            overflow-y: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+            text-align: right;
+        }
+
+        th, td {
+            padding: 10px 12px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        th {
+            background-color: #f1f5f9;
+            color: #334155;
+            font-weight: 700;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f8fafc;
+        }
+
+        tr:hover {
+            background-color: #fef3c7;
+        }
+
+        .chart-box {
+            width: 100%;
+            height: 400px;
+        }
+
+        .formula-card {
+            background-color: #f8fafc;
+            border-left: 4px solid var(--primary);
+            padding: 14px 16px;
+            margin-top: 16px;
+            border-radius: 0 8px 8px 0;
+            font-size: 13px;
+            color: #334155;
+        }
+
+        .formula-card code {
+            background-color: #e2e8f0;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: monospace;
+            color: #0f172a;
+        }
+
+        .btn-action {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .btn-action:hover {
+            background-color: var(--primary-hover);
+        }
+
+        .btn-secondary {
+            background-color: #64748b;
+            color: white;
+            border: none;
+            padding: 8px 14px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .btn-secondary:hover {
+            background-color: #475569;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                flex-direction: column;
+            }
+            .sidebar {
+                width: 100%;
+                position: relative;
+                height: auto;
+            }
+            .main-content {
+                margin-left: 0;
+                max-width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 左侧固定导航栏 -->
+    <aside class="sidebar">
+        <div class="sidebar-brand">
+            📊 期权与金价分析平台
+        </div>
+        <ul class="sidebar-menu">
+            <li>
+                <a href="/" class="nav-link">
+                    <span>📈</span>
+                    <span>GLD 期权定价分析</span>
+                </a>
+            </li>
+            <li>
+                <a href="/btc" class="nav-link">
+                    <span>₿</span>
+                    <span>BTC 期权定价分析</span>
+                </a>
+            </li>
+            <li>
+                <a href="/gold" class="nav-link active">
+                    <span>🪙</span>
+                    <span>黄金/XAU 换算中心</span>
+                </a>
+            </li>
+        </ul>
+        <div class="sidebar-footer">
+            <a href="/logout" class="logout-link">
+                <span>🚪</span>
+                <span>退出系统登录</span>
+            </a>
+        </div>
+    </aside>
+
+    <!-- 主体区域 -->
+    <main class="main-content">
+        <div class="page-header">
+            <div class="page-title">
+                <h1>🪙 伦敦金 (XAU) · GLD ETF · 国内黄金价格换算</h1>
+                <p>实时多向价格换算与投资成本测算 (基准汇率 <span class="badge-rate">USD/CNY = 6.74</span>)</p>
+            </div>
+        </div>
+
+        <!-- 换算核心与参数 -->
+        <div class="grid-2">
+            <!-- 实时多向换算器 -->
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">⚡ 实时多向价格换算</span>
+                    <span style="font-size: 12px; color: #64748b;">修改任意一项，其余项目自动同步</span>
+                </div>
+
+                <div class="converter-grid">
+                    <!-- XAU 伦敦金 -->
+                    <div class="input-group">
+                        <label for="inputXAU">
+                            <span>伦敦金 XAU/USD</span>
+                            <span style="color: #d97706;">国际现货</span>
+                        </label>
+                        <div class="input-wrapper">
+                            <input type="number" id="inputXAU" class="input-field" step="10" value="4000.00">
+                            <span class="input-unit">$/盎司</span>
+                        </div>
+                        <div class="sub-info" style="display: flex; justify-content: space-between; align-items: center; margin-top: 4px;">
+                            <span>1金衡盎司美价 (步长: $10)</span>
+                            <span style="display: flex; gap: 4px;">
+                                <button type="button" onclick="adjustXau(-10)" style="padding: 1px 6px; font-size: 11px; border: 1px solid #cbd5e1; border-radius: 4px; background: #fff; cursor: pointer;">-10</button>
+                                <button type="button" onclick="adjustXau(10)" style="padding: 1px 6px; font-size: 11px; border: 1px solid #d97706; border-radius: 4px; background: #fef3c7; color: #b45309; font-weight: bold; cursor: pointer;">+10</button>
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- GLD 黄金ETF -->
+                    <div class="input-group">
+                        <label for="inputGLD">
+                            <span>SPDR GLD ETF</span>
+                            <span style="color: #2563eb;">美股期权标的</span>
+                        </label>
+                        <div class="input-wrapper">
+                            <input type="number" id="inputGLD" class="input-field" step="10" value="368.91">
+                            <span class="input-unit">$/股</span>
+                        </div>
+                        <div class="sub-info" style="display: flex; justify-content: space-between; align-items: center; margin-top: 4px;">
+                            <span>比例 10.84 (步长: $10)</span>
+                            <span style="display: flex; gap: 4px;">
+                                <button type="button" onclick="adjustGld(-10)" style="padding: 1px 6px; font-size: 11px; border: 1px solid #cbd5e1; border-radius: 4px; background: #fff; cursor: pointer;">-10</button>
+                                <button type="button" onclick="adjustGld(10)" style="padding: 1px 6px; font-size: 11px; border: 1px solid #2563eb; border-radius: 4px; background: #eff6ff; color: #1d4ed8; font-weight: bold; cursor: pointer;">+10</button>
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- 人民币/克 -->
+                    <div class="input-group">
+                        <label for="inputRMBGram">
+                            <span>国内金价 (元/克)</span>
+                            <span style="color: #dc2626;">人民币克价</span>
+                        </label>
+                        <div class="input-wrapper">
+                            <input type="number" id="inputRMBGram" class="input-field" step="10" value="866.78">
+                            <span class="input-unit">元/克</span>
+                        </div>
+                        <div class="sub-info" style="display: flex; justify-content: space-between; align-items: center; margin-top: 4px;">
+                            <span id="rmbGramSubText">基于汇率 6.74 (步长: ￥10)</span>
+                            <span style="display: flex; gap: 4px;">
+                                <button type="button" onclick="adjustRmbGram(-10)" style="padding: 1px 6px; font-size: 11px; border: 1px solid #cbd5e1; border-radius: 4px; background: #fff; cursor: pointer;">-10</button>
+                                <button type="button" onclick="adjustRmbGram(10)" style="padding: 1px 6px; font-size: 11px; border: 1px solid #dc2626; border-radius: 4px; background: #fef2f2; color: #b91c1c; font-weight: bold; cursor: pointer;">+10</button>
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- 人民币/公斤 -->
+                    <div class="input-group">
+                        <label for="inputRMBKg">
+                            <span>公斤条金价 (元/公斤)</span>
+                            <span style="color: #059669;">大盘公斤价</span>
+                        </label>
+                        <div class="input-wrapper">
+                            <input type="number" id="inputRMBKg" class="input-field" step="10" value="866780">
+                            <span class="input-unit">元/kg</span>
+                        </div>
+                        <div class="sub-info">1000克黄金人民币价格</div>
+                    </div>
+                </div>
+
+                <!-- 换算核心公式说明 -->
+                <div class="formula-card">
+                    <strong>📐 换算公式逻辑:</strong><br>
+                    • <code>克价(元/克) = XAU(美元/盎司) × 汇率(6.74) ÷ 31.1034768 × (1 + 溢价率)</code><br>
+                    • <code>GLD(美元/股) = XAU(美元/盎司) ÷ 10.84</code>
+                </div>
+            </div>
+
+            <!-- 参数设置与测算器 -->
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">⚙️ 汇率与计算参数</span>
+                    <button class="btn-secondary" onclick="resetDefaults()">恢复默认参数</button>
+                </div>
+
+                <div class="params-bar">
+                    <div class="param-item">
+                        <label for="paramRate">USD/CNY 汇率</label>
+                        <input type="number" id="paramRate" step="0.0001" value="6.74">
+                    </div>
+                    <div class="param-item">
+                        <label for="paramOzGram">1金衡盎司 (克)</label>
+                        <input type="number" id="paramOzGram" step="0.0000001" value="31.1034768">
+                    </div>
+                    <div class="param-item">
+                        <label for="paramGLDRatio">GLD/XAU 比例</label>
+                        <input type="number" id="paramGLDRatio" step="0.01" value="10.84">
+                    </div>
+                    <div class="param-item">
+                        <label for="paramPremium">国内外溢价率 (%)</label>
+                        <input type="number" id="paramPremium" step="0.1" value="0.0">
+                    </div>
+                </div>
+
+                <div style="margin-top: 20px;">
+                    <div class="card-title" style="font-size: 15px; margin-bottom: 12px;">⚖️ 黄金重量与购金成本计算器</div>
+                    <div class="calc-row">
+                        <label style="font-size: 13px; font-weight: 600;">购买/持有数量:</label>
+                        <input type="number" id="calcWeight" value="100" style="width: 100px;">
+                        <select id="calcUnit">
+                            <option value="g">克 (g)</option>
+                            <option value="kg">千克/公斤 (kg)</option>
+                            <option value="oz">金衡盎司 (oz)</option>
+                            <option value="tael_hk">司马两 (37.4284g)</option>
+                            <option value="tael_cn">市两 (50.0g)</option>
+                        </select>
+                    </div>
+
+                    <div class="result-box">
+                        <div class="result-item">
+                            <span class="result-label">折合克数</span>
+                            <span class="result-value" id="resGrams">100.00 g</span>
+                        </div>
+                        <div class="result-item">
+                            <span class="result-label">人民币总价</span>
+                            <span class="result-value" id="resCNY">￥86,678</span>
+                        </div>
+                        <div class="result-item">
+                            <span class="result-label">美元总价</span>
+                            <span class="result-value" id="resUSD">$12,860.24</span>
+                        </div>
+                        <div class="result-item">
+                            <span class="result-label">相当GLD股数</span>
+                            <span class="result-value" id="resGLDShares">34.85 股</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 价格对照表与走势图 -->
+        <div class="card">
+            <div class="card-header">
+                <span class="card-title">📊 黄金价格阶梯对照表 & 换算曲线</span>
+                <div style="display: flex; justify-content: space-between; align-items: center; gap: 12px;">
+                    <div style="font-size: 12px; color: #64748b;">
+                        XAU 起始: <input type="number" id="tblMinXAU" value="3500" style="width: 70px; padding: 2px 6px;">
+                        截止: <input type="number" id="tblMaxXAU" value="7000" style="width: 70px; padding: 2px 6px;">
+                        步长: <input type="number" id="tblStepXAU" value="100" style="width: 60px; padding: 2px 6px;">
+                        <button class="btn-secondary" style="padding: 2px 8px; font-size: 12px;" onclick="updateMatrix()">更新对照</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tabs">
+                <button class="tab-btn active" id="btnTabTable" onclick="switchTab('table')">📋 价格对照矩阵</button>
+                <button class="tab-btn" id="btnTabChart" onclick="switchTab('chart')">📈 换算线性曲线图</button>
+            </div>
+
+            <div id="tabContentTable">
+                <div class="table-responsive">
+                    <table id="matrixTable">
+                        <thead>
+                            <tr>
+                                <th>伦敦金 XAU ($/oz)</th>
+                                <th>GLD ETF ($/股)</th>
+                                <th>基准克价 (元/克)</th>
+                                <th>含溢价克价 (元/克)</th>
+                                <th>公斤条价格 (元/kg)</th>
+                                <th>100克黄金总价 (元)</th>
+                                <th>1金衡盎司总价 (元)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="matrixTbody">
+                            <!-- 动态表格 -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="tabContentChart" style="display: none;">
+                <div id="goldChart" class="chart-box"></div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // 全局状态管理
+        const state = {
+            rate: 6.74,
+            ozGrams: 31.1034768,
+            gldRatio: 10.84,
+            premium: 0.0,
+            xau: 4000.00,
+            lastSource: 'xau'
+        };
+
+        // DOM 元素引用
+        const inputXAU = document.getElementById('inputXAU');
+        const inputGLD = document.getElementById('inputGLD');
+        const inputRMBGram = document.getElementById('inputRMBGram');
+        const inputRMBKg = document.getElementById('inputRMBKg');
+
+        const paramRate = document.getElementById('paramRate');
+        const paramOzGram = document.getElementById('paramOzGram');
+        const paramGLDRatio = document.getElementById('paramGLDRatio');
+        const paramPremium = document.getElementById('paramPremium');
+
+        let myChart = null;
+
+        // 初始化
+        window.addEventListener('DOMContentLoaded', () => {
+            bindEvents();
+            updateCalculationsFromXAU();
+            updateMatrix();
+        });
+
+        function adjustXau(delta) {
+            state.xau = Math.max(10, state.xau + delta);
+            state.lastSource = 'xau';
+            inputXAU.value = state.xau.toFixed(2);
+            highlightActive(inputXAU);
+            updateCalculationsFromXAU();
+        }
+
+        function adjustGld(delta) {
+            const currentGld = state.xau / state.gldRatio;
+            const newGld = Math.max(1, currentGld + delta);
+            state.xau = newGld * state.gldRatio;
+            state.lastSource = 'gld';
+            inputGLD.value = newGld.toFixed(2);
+            highlightActive(inputGLD);
+            updateCalculationsFromXAU();
+        }
+
+        function adjustRmbGram(delta) {
+            const mult = (1 + state.premium / 100);
+            const currentRmbGram = ((state.xau * state.rate) / state.ozGrams) * mult;
+            const newRmbGram = Math.max(1, currentRmbGram + delta);
+            state.xau = (newRmbGram * state.ozGrams) / (state.rate * mult);
+            state.lastSource = 'rmbGram';
+            inputRMBGram.value = newRmbGram.toFixed(2);
+            highlightActive(inputRMBGram);
+            updateCalculationsFromXAU();
+        }
+
+        function bindEvents() {
+            // 核心换算输入监听
+            inputXAU.addEventListener('input', (e) => {
+                const val = parseFloat(e.target.value);
+                if (!isNaN(val) && val > 0) {
+                    state.xau = val;
+                    state.lastSource = 'xau';
+                    highlightActive(inputXAU);
+                    updateCalculationsFromXAU();
+                }
+            });
+
+            inputGLD.addEventListener('input', (e) => {
+                const val = parseFloat(e.target.value);
+                if (!isNaN(val) && val > 0) {
+                    state.xau = val * state.gldRatio;
+                    state.lastSource = 'gld';
+                    highlightActive(inputGLD);
+                    updateCalculationsFromXAU();
+                }
+            });
+
+            inputRMBGram.addEventListener('input', (e) => {
+                const val = parseFloat(e.target.value);
+                if (!isNaN(val) && val > 0) {
+                    const mult = (1 + state.premium / 100);
+                    state.xau = (val * state.ozGrams) / (state.rate * mult);
+                    state.lastSource = 'rmbGram';
+                    highlightActive(inputRMBGram);
+                    updateCalculationsFromXAU();
+                }
+            });
+
+            inputRMBKg.addEventListener('input', (e) => {
+                const val = parseFloat(e.target.value);
+                if (!isNaN(val) && val > 0) {
+                    const rmbGram = val / 1000;
+                    const mult = (1 + state.premium / 100);
+                    state.xau = (rmbGram * state.ozGrams) / (state.rate * mult);
+                    state.lastSource = 'rmbKg';
+                    highlightActive(inputRMBKg);
+                    updateCalculationsFromXAU();
+                }
+            });
+
+            // 参数设置监听
+            paramRate.addEventListener('input', updateParams);
+            paramOzGram.addEventListener('input', updateParams);
+            paramGLDRatio.addEventListener('input', updateParams);
+            paramPremium.addEventListener('input', updateParams);
+
+            // 重量计算器监听
+            document.getElementById('calcWeight').addEventListener('input', updateCostCalculator);
+            document.getElementById('calcUnit').addEventListener('change', updateCostCalculator);
+        }
+
+        function resetDefaults() {
+            paramRate.value = "6.74";
+            paramOzGram.value = "31.1034768";
+            paramGLDRatio.value = "10.84";
+            paramPremium.value = "0.0";
+            updateParams();
+        }
+
+        function highlightActive(element) {
+            [inputXAU, inputGLD, inputRMBGram, inputRMBKg].forEach(el => el.classList.remove('last-modified'));
+            element.classList.add('last-modified');
+        }
+
+        function updateCalculationsFromXAU() {
+            const xau = state.xau;
+            const gld = xau / state.gldRatio;
+            const rmbGramBase = (xau * state.rate) / state.ozGrams;
+            const rmbGramWithPrem = rmbGramBase * (1 + state.premium / 100);
+            const rmbKg = rmbGramWithPrem * 1000;
+
+            if (state.lastSource !== 'xau') inputXAU.value = xau.toFixed(2);
+            if (state.lastSource !== 'gld') inputGLD.value = gld.toFixed(2);
+            if (state.lastSource !== 'rmbGram') inputRMBGram.value = rmbGramWithPrem.toFixed(2);
+            if (state.lastSource !== 'rmbKg') inputRMBKg.value = rmbKg.toFixed(0);
+
+            updateCostCalculator();
+            updateMatrix();
+        }
+
+        function updateCostCalculator() {
+            const weightVal = parseFloat(document.getElementById('calcWeight').value) || 0;
+            const unit = document.getElementById('calcUnit').value;
+
+            let grams = weightVal;
+            if (unit === 'kg') grams = weightVal * 1000;
+            else if (unit === 'oz') grams = weightVal * state.ozGrams;
+            else if (unit === 'tael_hk') grams = weightVal * 37.4284;
+            else if (unit === 'tael_cn') grams = weightVal * 50.0;
+
+            const rmbGram = ((state.xau * state.rate) / state.ozGrams) * (1 + state.premium / 100);
+            const totalCNY = grams * rmbGram;
+            const totalUSD = totalCNY / state.rate;
+            const totalGLDShares = (grams / state.ozGrams) * state.gldRatio;
+
+            document.getElementById('resGrams').innerText = grams.toFixed(2) + ' g';
+            document.getElementById('resCNY').innerText = '￥' + totalCNY.toLocaleString('zh-CN', { maximumFractionDigits: 2 });
+            document.getElementById('resUSD').innerText = '$' + totalUSD.toLocaleString('en-US', { maximumFractionDigits: 2 });
+            document.getElementById('resGLDShares').innerText = totalGLDShares.toFixed(2) + ' 股';
+        }
+
+        function updateParams() {
+            state.rate = parseFloat(paramRate.value) || 6.74;
+            state.ozGrams = parseFloat(paramOzGram.value) || 31.1034768;
+            state.gldRatio = parseFloat(paramGLDRatio.value) || 10.84;
+            state.premium = parseFloat(paramPremium.value) || 0.0;
+
+            document.getElementById('rmbGramSubText').innerText = `基于汇率 ${state.rate} (步长: ￥10)`;
+            updateCalculationsFromXAU();
+        }
+
+        function updateMatrix() {
+            const minXAU = parseFloat(document.getElementById('tblMinXAU').value) || 3500;
+            const maxXAU = parseFloat(document.getElementById('tblMaxXAU').value) || 7000;
+            const stepXAU = parseFloat(document.getElementById('tblStepXAU').value) || 100;
+
+            const tbody = document.getElementById('matrixTbody');
+            tbody.innerHTML = '';
+
+            const chartXData = [];
+            const chartYBaseData = [];
+            const chartYGLDData = [];
+
+            for (let xau = minXAU; xau <= maxXAU; xau += stepXAU) {
+                const gld = xau / state.gldRatio;
+                const baseGram = (xau * state.rate) / state.ozGrams;
+                const premGram = baseGram * (1 + state.premium / 100);
+                const rmbKg = premGram * 1000;
+                const cost100g = premGram * 100;
+                const costOz = premGram * state.ozGrams;
+
+                chartXData.push(xau);
+                chartYBaseData.push(parseFloat(premGram.toFixed(2)));
+                chartYGLDData.push(parseFloat(gld.toFixed(2)));
+
+                const tr = document.createElement('tr');
+                if (Math.abs(xau - state.xau) < stepXAU / 2) {
+                    tr.style.backgroundColor = '#fef3c7';
+                    tr.style.fontWeight = 'bold';
+                }
+
+                tr.innerHTML = `
+                    <td style="color: #0f172a; font-weight: 700;">$${xau.toFixed(2)}</td>
+                    <td style="color: #2563eb;">$${gld.toFixed(2)}</td>
+                    <td style="color: #475569;">￥${baseGram.toFixed(2)}</td>
+                    <td style="color: #dc2626; font-weight: 700;">￥${premGram.toFixed(2)}</td>
+                    <td style="color: #059669;">￥${Math.round(rmbKg).toLocaleString()}</td>
+                    <td>￥${Math.round(cost100g).toLocaleString()}</td>
+                    <td>￥${Math.round(costOz).toLocaleString()}</td>
+                `;
+                tbody.appendChild(tr);
+            }
+
+            renderChart(chartXData, chartYBaseData, chartYGLDData);
+        }
+
+        function switchTab(tabName) {
+            const tabTable = document.getElementById('tabContentTable');
+            const tabChart = document.getElementById('tabContentChart');
+            const btnTable = document.getElementById('btnTabTable');
+            const btnChart = document.getElementById('btnTabChart');
+
+            if (tabName === 'table') {
+                tabTable.style.display = 'block';
+                tabChart.style.display = 'none';
+                btnTable.classList.add('active');
+                btnChart.classList.remove('active');
+            } else {
+                tabTable.style.display = 'none';
+                tabChart.style.display = 'block';
+                btnTable.classList.remove('active');
+                btnChart.classList.add('active');
+                if (myChart) {
+                    setTimeout(() => myChart.resize(), 50);
+                }
+            }
+        }
+
+        function renderChart(xData, yGramData, yGLDData) {
+            const chartDom = document.getElementById('goldChart');
+            if (!myChart) {
+                myChart = echarts.init(chartDom);
+            }
+
+            const option = {
+                title: {
+                    text: `伦敦金 XAU vs 国内黄金克价 (汇率 ${state.rate})`,
+                    left: 'center',
+                    textStyle: { fontSize: 15, color: '#1e293b' }
+                },
+                tooltip: {
+                    trigger: 'axis',
+                    formatter: function(params) {
+                        const xauVal = params[0].axisValue;
+                        let res = `<b>伦敦金 XAU: $${xauVal}/oz</b><br/>`;
+                        params.forEach(item => {
+                            res += `${item.marker} ${item.seriesName}: <b>${item.value}</b><br/>`;
+                        });
+                        return res;
+                    }
+                },
+                legend: {
+                    data: ['国内黄金克价 (元/克)', 'GLD ETF ($/股)'],
+                    bottom: 0
+                },
+                grid: {
+                    left: '4%',
+                    right: '4%',
+                    bottom: '10%',
+                    containLabel: true
+                },
+                xAxis: {
+                    type: 'category',
+                    name: 'XAU ($/oz)',
+                    data: xData,
+                    axisLine: { lineStyle: { color: '#64748b' } }
+                },
+                yAxis: [
+                    {
+                        type: 'value',
+                        name: '人民币 (元/克)',
+                        axisLabel: { formatter: '￥{value}' },
+                        splitLine: { lineStyle: { type: 'dashed' } }
+                    },
+                    {
+                        type: 'value',
+                        name: 'GLD ($/股)',
+                        axisLabel: { formatter: '${value}' },
+                        splitLine: { show: false }
+                    }
+                ],
+                series: [
+                    {
+                        name: '国内黄金克价 (元/克)',
+                        type: 'line',
+                        data: yGramData,
+                        smooth: true,
+                        lineStyle: { width: 3, color: '#dc2626' },
+                        itemStyle: { color: '#dc2626' }
+                    },
+                    {
+                        name: 'GLD ETF ($/股)',
+                        type: 'line',
+                        yAxisIndex: 1,
+                        data: yGLDData,
+                        smooth: true,
+                        lineStyle: { width: 2, color: '#2563eb', type: 'dashed' },
+                        itemStyle: { color: '#2563eb' }
+                    }
+                ]
+            };
+
+            myChart.setOption(option);
+        }
+
+        window.addEventListener('resize', () => {
+            if (myChart) myChart.resize();
+        });
+    </script>
+</body>
+</html>

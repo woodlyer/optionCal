@@ -101,8 +101,15 @@ def btc():
 @app.route('/')
 @login_required
 def index():
-    """渲染主 HTML 页面"""
+    """渲染 GLD 期权主 HTML 页面"""
     return render_template('index.html')
+
+@app.route('/gold')
+@app.route('/xau')
+@login_required
+def gold():
+    """渲染黄金/XAU/GLD/人民币克价 换算页面"""
+    return render_template('gold.html')
 
 @app.route('/calculate_option_prices', methods=['POST'])
 @login_required
@@ -257,4 +264,4 @@ if __name__ == '__main__':
     # 注意：使用自签名证书会在浏览器中显示安全警告。
     # 生产环境中推荐使用 Let's Encrypt 等免费的或购买的受信任证书，并配合 Nginx/Apache 反向代理。
 #    app.run(debug=True, host='0.0.0.0', port=5000, ssl_context=('cert.pem', 'key.pem'))
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    app.run(debug=True, use_reloader=False, host='0.0.0.0', port=5000)

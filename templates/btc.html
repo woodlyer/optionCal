@@ -3,258 +3,491 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BTC 价格与期权分析</title>
-    
-    <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script> 
+    <title>BTC 比特币期权定价分析</title>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
     <style>
+        :root {
+            --primary: #f7931a;
+            --primary-hover: #e08311;
+            --primary-light: #fff7ed;
+            --sidebar-bg: #0f172a;
+            --sidebar-hover: #1e293b;
+            --bg-body: #f8fafc;
+            --card-bg: #ffffff;
+            --border-color: #e2e8f0;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --sidebar-width: 240px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
         body {
-            font-family: Arial, sans-serif;
-            margin: 10px;
-            background-color: #f4f4f4;
-            color: #333;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            display: flex;
+            min-height: 100vh;
         }
-        .container {
-            max-width: 1200px;
-            margin: auto;
-            background-color: #fff;
-            padding: 15px 25px;
+
+        /* 左侧固定导航栏 Navigation */
+        .sidebar {
+            width: var(--sidebar-width);
+            background-color: var(--sidebar-bg);
+            color: #fff;
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            z-index: 100;
+            box-shadow: 4px 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .sidebar-brand {
+            padding: 20px 18px;
+            font-size: 17px;
+            font-weight: 700;
+            color: #fbbf24;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .sidebar-menu {
+            list-style: none;
+            padding: 16px 10px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 11px 14px;
+            color: #94a3b8;
+            text-decoration: none;
             border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s ease;
         }
-        h1 {
-            color: #0056b3;
-            text-align: center;
-            margin: 0 0 15px 0;
-            font-size: 24px;
+
+        .nav-link:hover {
+            color: #ffffff;
+            background-color: var(--sidebar-hover);
         }
-        .controls {
+
+        .nav-link.active {
+            color: #ffffff;
+            background-color: var(--primary);
+            font-weight: 600;
+        }
+
+        .sidebar-footer {
+            padding: 16px;
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .logout-link {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            width: 100%;
+            padding: 10px;
+            background-color: rgba(239, 68, 68, 0.15);
+            color: #fca5a5;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            border-radius: 8px;
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .logout-link:hover {
+            background-color: #ef4444;
+            color: white;
+        }
+
+        /* 右侧主体内容 */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            flex: 1;
+            padding: 24px;
+            max-width: calc(100vw - var(--sidebar-width));
+        }
+
+        .page-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 12px;
         }
-        .controls h2 {
-            margin: 0;
-            font-size: 18px;
+
+        .page-title h1 {
+            font-size: 22px;
+            font-weight: 800;
+            color: #0f172a;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
-        #addOption {
-            background-color: #28a745;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 16px;
+
+        .page-title p {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-top: 2px;
         }
-        #addOption:hover {
-            background-color: #218838;
-        }
-        .option-inputs {
-            border: 1px solid #ddd;
-            padding: 15px;
-            border-radius: 5px;
-            margin-bottom: 15px;
-            background-color: #f9f9f9;
-        }
-        .option-row {
-            display: grid;
-            grid-template-columns: repeat(5, 1fr) auto; /* 到期日, 行权价, 波动率, 期权类型, 计算日期, 删除 */
+
+        .header-actions {
+            display: flex;
             gap: 10px;
             align-items: center;
-            margin-bottom: 10px;
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
             padding-bottom: 10px;
-            border-bottom: 1px dashed #eee;
+            border-bottom: 1px solid #f1f5f9;
         }
-        .option-row:last-child {
-            border-bottom: none;
-            margin-bottom: 0;
-            padding-bottom: 0;
+
+        .card-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: #0f172a;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
+
+        /* 全局参数 */
+        .global-params-bar {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            background-color: #fff7ed;
+            padding: 12px 16px;
+            border-radius: 8px;
+            border: 1px dashed #fdba74;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+        }
+
+        .global-params-bar label {
+            font-size: 13px;
+            font-weight: 600;
+            color: #c2410c;
+        }
+
+        .global-params-bar input[type="number"] {
+            padding: 6px 10px;
+            border: 1px solid #fdba74;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 14px;
+            width: 120px;
+            color: #9a3412;
+        }
+
+        /* 期权输入列表 */
+        .option-inputs {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .option-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)) 44px;
+            gap: 12px;
+            align-items: center;
+            background-color: #f8fafc;
+            padding: 12px 14px;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+            position: relative;
+        }
+
         .option-row label {
-            font-weight: bold;
-            margin-bottom: 5px;
+            font-size: 12px;
+            font-weight: 600;
+            color: #475569;
+            margin-bottom: 4px;
             display: block;
         }
+
         .option-row input[type="date"],
         .option-row input[type="number"],
         .option-row select {
-            width: calc(100% - 10px); /* Adjust width for padding/border */
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            font-size: 14px;
-        }
-        .delete-option {
-            background-color: #dc3545;
-            color: white;
-            border: none;
-            padding: 8px 12px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 14px;
-        }
-        .delete-option:hover {
-            background-color: #c82333;
-        }
-        .chart-container {
             width: 100%;
-            height: 500px; /* 默认高度，后面会通过全屏按钮调整 */
+            padding: 7px 10px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            font-size: 13px;
+            outline: none;
             background-color: #fff;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-            position: relative; /* Added for fullscreen button positioning */
-        }
-        .calculate-button-container {
-            text-align: center;
-            margin-top: 15px;
-        }
-        #calculateCurves {
-            background-color: #007bff;
-            color: white;
-            border: none;
-            padding: 8px 15px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 14px;
-            margin: 0 5px;
-        }
-        #calculateCurves:hover {
-            background-color: #0069d9;
-        }
-        /* 隐藏不再需要的 GLD 日期范围部分 */
-        .gld-date-range {
-            display: none; 
-        }
-        .chart-actions {
-            text-align: right;
-            margin-top: 5px;
-            margin-bottom: 10px;
-        }
-        .chart-actions button {
-            background-color: #6c757d;
-            color: white;
-            border: none;
-            padding: 8px 15px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 14px;
-            margin: 0 5px;
-        }
-        .chart-actions button:hover {
-            background-color: #5a6268;
-        }
-        .global-params {
-            margin-bottom: 15px;
-            padding: 10px 15px;
-            border: 1px solid #e0e0e0;
-            border-radius: 5px;
-            background-color: #f0f0f0;
-            display: flex;
-            align-items: center;
-        }
-        .global-params h3 {
-            margin: 0 20px 0 0;
-            font-size: 16px;
-        }
-        .global-params label {
-            margin-right: 10px;
-            font-weight: bold;
-        }
-        .global-params input[type="number"] {
-            padding: 8px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            font-size: 14px;
-            width: 100px;
+            font-weight: 500;
         }
 
-        /* Fullscreen styles */
+        .option-row input:focus, .option-row select:focus {
+            border-color: var(--primary);
+        }
+
+        .delete-option {
+            background-color: #fef2f2;
+            color: #ef4444;
+            border: 1px solid #fca5a5;
+            width: 36px;
+            height: 36px;
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            transition: all 0.2s;
+            align-self: flex-end;
+            margin-bottom: 2px;
+        }
+
+        .delete-option:hover {
+            background-color: #ef4444;
+            color: white;
+        }
+
+        /* 按钮组 */
+        .btn-primary {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 9px 18px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-hover);
+        }
+
+        .btn-success {
+            background-color: #10b981;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .btn-success:hover {
+            background-color: #059669;
+        }
+
+        .btn-secondary {
+            background-color: #64748b;
+            color: white;
+            border: none;
+            padding: 8px 14px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .btn-secondary:hover {
+            background-color: #475569;
+        }
+
+        /* 图表容器 */
+        .chart-card {
+            background-color: #fff;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 16px;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
+        }
+
+        .chart-container {
+            width: 100%;
+            height: 520px;
+            position: relative;
+        }
+
         .chart-container.fullscreen {
             position: fixed;
             top: 0;
             left: 0;
-            width: 100vw; /* 视口宽度 */
-            height: 100vh; /* 视口高度 */
-            padding: 0;
-            margin: 0;
-            z-index: 1000; /* Ensure it's on top */
-            background-color: #fff; /* or any background for fullscreen */
-            border-radius: 0;
-            box-shadow: none;
+            width: 100vw;
+            height: 100vh;
+            z-index: 1000;
+            background-color: #fff;
+            padding: 20px;
         }
 
-        /* Fullscreen Exit Button styles */
         #exitFullscreenButton {
-            position: fixed; /* Fixed position so it stays visible */
+            position: fixed;
             top: 20px;
             right: 20px;
-            background-color: #dc3545; /* Red color for exit */
+            background-color: #ef4444;
             color: white;
             border: none;
-            padding: 10px 15px;
-            border-radius: 5px;
+            padding: 10px 16px;
+            border-radius: 8px;
             cursor: pointer;
-            font-size: 16px;
-            z-index: 1001; /* Higher than chart container */
-            display: none; /* Hidden by default */
+            font-size: 14px;
+            font-weight: 600;
+            z-index: 1001;
+            display: none;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         }
-        #exitFullscreenButton:hover {
-            background-color: #c82333;
+
+        @media (max-width: 768px) {
+            body {
+                flex-direction: column;
+            }
+            .sidebar {
+                width: 100%;
+                position: relative;
+                height: auto;
+            }
+            .main-content {
+                margin-left: 0;
+                max-width: 100%;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>BTC 价格与期权分析工具</h1>
 
-        <div class="global-params">
-            <h3>全局参数</h3>
-            <label for="riskFreeRate">无风险利率:</label>
-            <input type="number" id="riskFreeRate" step="0.000001" value="0.052197" required>
+    <!-- 左侧固定导航栏 -->
+    <aside class="sidebar">
+        <div class="sidebar-brand">
+            📊 期权与金价分析平台
+        </div>
+        <ul class="sidebar-menu">
+            <li>
+                <a href="/" class="nav-link">
+                    <span>📈</span>
+                    <span>GLD 期权定价分析</span>
+                </a>
+            </li>
+            <li>
+                <a href="/btc" class="nav-link active">
+                    <span>₿</span>
+                    <span>BTC 期权定价分析</span>
+                </a>
+            </li>
+            <li>
+                <a href="/gold" class="nav-link">
+                    <span>🪙</span>
+                    <span>黄金/XAU 换算中心</span>
+                </a>
+            </li>
+        </ul>
+        <div class="sidebar-footer">
+            <a href="/logout" class="logout-link">
+                <span>🚪</span>
+                <span>退出系统登录</span>
+            </a>
+        </div>
+    </aside>
+
+    <!-- 主体区域 -->
+    <main class="main-content">
+        <div class="page-header" style="margin-bottom: 12px;">
+            <div class="page-title">
+                <h1>₿ 比特币 (BTC) 期权定价与估值模型</h1>
+                <p>根据到期时间（包含北京时间16:00/Deribit交割点）推算 Black-Scholes 期权理论价格</p>
+            </div>
         </div>
 
-        <div class="gld-date-range">
-            <h3>BTC 历史价格日期范围 (模拟)</h3>
-            <label for="gldStartDate">开始日期:</label>
-            <input type="date" id="gldStartDate" required>
-            <label for="gldEndDate" style="margin-left: 20px;">结束日期:</label>
-            <input type="date" id="gldEndDate" required>
-        </div>
-
-        <div class="controls">
-            <h2>期权参数设置</h2>
-            <button id="addOption">添加期权</button>
-        </div>
-
-        <div id="optionInputs" class="option-inputs">
+        <!-- 参数配置卡片 -->
+        <div class="card">
+            <div class="card-header">
+                <div>
+                    <span class="card-title">📝 BTC 期权合约组合参数设置</span>
+                    <span style="font-size: 12px; color: #64748b;">设置到期日、行权价 ($50,000 - $160,000) 及波动率</span>
+                </div>
+                <div style="display: flex; gap: 8px; align-items: center;">
+                    <button id="addOption" class="btn-success">＋ 添加 BTC 期权</button>
+                    <button id="calculateCurves" class="btn-primary">⚡ 计算并绘制 BTC 曲线</button>
+                </div>
             </div>
 
-        <h2 style="margin: 15px 0 5px 0; font-size: 18px; text-align: center;">曲线图分析</h2>
-        <div class="chart-actions">
-            <button id="resetChart">重置图表</button> 
-            <button id="toggleFullscreen">全屏显示</button> 
-            <button id="calculateCurves">计算并绘制曲线</button></div>
-        <div class="chart-container">
-            <div id="priceChart" style="width: 100%; height: 100%;"></div> 
-            <button id="exitFullscreenButton" style="display: none;">退出全屏</button>
+            <div class="global-params-bar">
+                <label for="riskFreeRate">🔑 BTC 无风险利率 (r):</label>
+                <input type="number" id="riskFreeRate" step="0.000001" value="0.052197" required>
+                <span style="font-size: 12px; color: #ea580c;">(基于加密货币无风险折算利率)</span>
+            </div>
+
+            <div id="optionInputs" class="option-inputs">
+                <!-- 动态创建期权输入行 -->
+            </div>
         </div>
-    </div>
+
+        <!-- 图表展示卡片 -->
+        <div class="chart-card">
+            <div class="card-header">
+                <span class="card-title">📉 BTC 现货价格敏感度期权收益曲线 ($50k - $160k)</span>
+                <div>
+                    <button id="resetChart" class="btn-secondary" style="padding: 6px 12px; font-size: 12px;">重置缩放</button>
+                    <button id="toggleFullscreen" class="btn-secondary" style="padding: 6px 12px; font-size: 12px; margin-left: 6px;">全屏图表</button>
+                </div>
+            </div>
+
+            <div class="chart-container">
+                <div id="priceChart" style="width: 100%; height: 100%;"></div>
+                <button id="exitFullscreenButton">✕ 退出全屏</button>
+            </div>
+        </div>
+    </main>
 
     <script>
         const addOptionButton = document.getElementById('addOption');
         const optionInputsContainer = document.getElementById('optionInputs');
         const calculateCurvesButton = document.getElementById('calculateCurves');
-        const resetChartButton = document.getElementById('resetChart'); 
-        const toggleFullscreenButton = document.getElementById('toggleFullscreen'); 
-        const exitFullscreenButton = document.getElementById('exitFullscreenButton'); // 获取新的退出全屏按钮
-        const riskFreeRateInput = document.getElementById('riskFreeRate'); 
-        const chartContainer = document.querySelector('.chart-container'); 
+        const resetChartButton = document.getElementById('resetChart');
+        const toggleFullscreenButton = document.getElementById('toggleFullscreen');
+        const exitFullscreenButton = document.getElementById('exitFullscreenButton');
+        const riskFreeRateInput = document.getElementById('riskFreeRate');
+        const chartContainer = document.querySelector('.chart-container');
 
-        const chartDom = document.getElementById('priceChart'); 
-        let myChart = echarts.init(chartDom); 
+        const chartDom = document.getElementById('priceChart');
+        let myChart = echarts.init(chartDom);
 
-        let optionCounter = 0; 
+        let optionCounter = 0;
 
         function formatDate(date) {
             const year = date.getFullYear();
@@ -269,37 +502,35 @@
             optionRow.classList.add('option-row');
             optionRow.setAttribute('data-option-id', optionCounter);
 
-            const defaultExpiryDate = new Date('2026-08-29'); 
-            const defaultCalcDate = new Date(); 
-            //defaultCalcDate.setFullYear(2025, 5, 28); 
+            const defaultExpiryDate = new Date('2026-08-29');
+            const defaultCalcDate = new Date();
 
             optionRow.innerHTML = `
                 <div>
-                    <label for="expiryDate-${optionCounter}">到期日:</label>
+                    <label for="expiryDate-${optionCounter}">到期日</label>
                     <input type="date" id="expiryDate-${optionCounter}" value="${formatDate(defaultExpiryDate)}" required>
                 </div>
                 <div>
-                    <label for="strikePrice-${optionCounter}">行权价:</label>
+                    <label for="strikePrice-${optionCounter}">行权价 ($)</label>
                     <input type="number" id="strikePrice-${optionCounter}" step="1000" min="0" value="80000" required>
                 </div>
                 <div>
-                    <label for="volatility-${optionCounter}">波动率 (%):</label>
+                    <label for="volatility-${optionCounter}">波动率 (%)</label>
                     <input type="number" id="volatility-${optionCounter}" step="0.01" min="0.000001" value="38.26" required>
                 </div>
                 <div>
-                    <label for="optionType-${optionCounter}">期权类型:</label>
+                    <label for="optionType-${optionCounter}">期权类型</label>
                     <select id="optionType-${optionCounter}">
                         <option value="call">看涨 (Call)</option>
                         <option value="put">看跌 (Put)</option>
                     </select>
                 </div>
-                 <div>
-                    <label for="calculationDate-${optionCounter}">计算日期:</label>
+                <div>
+                    <label for="calculationDate-${optionCounter}">计算基准日</label>
                     <input type="date" id="calculationDate-${optionCounter}" value="${formatDate(defaultCalcDate)}" required>
                 </div>
                 <div>
-                    <label>&nbsp;</label>
-                    <button class="delete-option" data-option-id="${optionCounter}">删除</button>
+                    <button class="delete-option" data-option-id="${optionCounter}" title="删除此期权">✕</button>
                 </div>
             `;
             optionInputsContainer.appendChild(optionRow);
@@ -307,7 +538,7 @@
             optionRow.querySelector('.delete-option').addEventListener('click', function() {
                 optionRow.remove();
                 if (optionInputsContainer.children.length === 0) {
-                    addOptionRow(); 
+                    addOptionRow();
                 }
             });
         }
@@ -329,7 +560,7 @@
                 });
             });
 
-            const riskFreeRate = parseFloat(riskFreeRateInput.value); 
+            const riskFreeRate = parseFloat(riskFreeRateInput.value);
 
             try {
                 const response = await fetch('/calculate_btc_option_prices', {
@@ -337,9 +568,9 @@
                     headers: {
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({ 
+                    body: JSON.stringify({
                         options: options,
-                        riskFreeRate: riskFreeRate 
+                        riskFreeRate: riskFreeRate
                     })
                 });
 
@@ -350,25 +581,17 @@
                 const data = await response.json();
 
                 const option = {
-                    // 图例组件，用于显示不同系列（曲线）的名称，并支持点击交互
-                    // legend: {
-                    //     data: ['期权1', '期权2'], // 这里的数据项名称需要和下面的 series.name 对应
-                    //     // 如果你想在图例点击时，自定义显示/隐藏的逻辑，可以监听 legendselectchanged 事件
-                    //     // 但默认行为（点击隐藏/显示）已经非常方便，通常不需要额外代码
-                    // },
-
-                    // 工具箱组件（可选，例如可以添加数据视图、保存图片等）
                     toolbox: {
                         feature: {
-                            saveAsImage: {} // 保存为图片
+                            saveAsImage: {}
                         }
                     },
                     tooltip: {
                         trigger: 'axis',
                         formatter: function(params) {
-                            let res = 'BTC 价格: ' + params[0].value[0] + '<br/>';
+                            let res = '<b>BTC 现货价格: $' + params[0].value[0] + '</b><br/>';
                             params.forEach(item => {
-                                res += item.marker + item.seriesName + ': ' + item.value[1].toFixed(2) + '<br/>';
+                                res += item.marker + item.seriesName + ': <b>$' + item.value[1].toFixed(2) + '</b><br/>';
                             });
                             return res;
                         },
@@ -376,47 +599,48 @@
                             type: 'cross'
                         }
                     },
+                    legend: {
+                        top: 0
+                    },
                     xAxis: {
                         type: 'value',
-                        name: 'BTC 价格',
+                        name: 'BTC 价格 ($)',
                         axisLabel: {
-                            formatter: '{value}'
+                            formatter: '${value}'
                         }
                     },
                     yAxis: {
                         type: 'value',
-                        name: '期权价格',
-			            min: -5000,
+                        name: 'BTC 期权价格 ($)',
+                        min: -5000,
                         axisLabel: {
-                            formatter: '{value}'
+                            formatter: '${value}'
                         }
                     },
                     grid: {
                         left: '3%',
                         right: '4%',
-                        bottom: '10%', 
+                        bottom: '10%',
                         containLabel: true
                     },
                     dataZoom: [
                         {
-                            type: 'inside', 
+                            type: 'inside',
                             xAxisIndex: [0],
                             filterMode: 'none',
-                            zoomOnMouseWheel: true, 
-                            moveOnMouseMove: true, 
-                            moveOnMouseWheel: false 
+                            zoomOnMouseWheel: true,
+                            moveOnMouseMove: true
                         },
                         {
                             type: 'inside',
-                            yAxisIndex: [0], 
+                            yAxisIndex: [0],
                             filterMode: 'none',
                             zoomOnMouseWheel: true,
-                            moveOnMouseMove: true, 
-                            moveOnMouseWheel: false
+                            moveOnMouseMove: true
                         }
                     ],
                     series: data.datasets.map(d => ({
-                        name: d.label, 
+                        name: d.label,
                         type: d.type,
                         smooth: d.smooth,
                         data: d.data,
@@ -424,62 +648,44 @@
                     }))
                 };
 
-                myChart.setOption(option, true); 
-                
-                window.addEventListener('resize', function() {
-                    myChart.resize();
-                });
+                myChart.setOption(option, true);
 
             } catch (error) {
                 console.error('计算曲线时出错:', error);
-                alert('计算曲线时出错。请检查控制台获取更多信息。');
+                alert('计算 BTC 期权曲线时出错，请检查后重试。');
             }
         });
 
         resetChartButton.addEventListener('click', () => {
-            calculateCurvesButton.click(); 
+            calculateCurvesButton.click();
         });
 
-        // --- 全屏功能及退出 ---
         function toggleFullscreen(isExit = false) {
             if (chartContainer.classList.contains('fullscreen') || isExit) {
-                // 当前是全屏，或者强制退出
                 chartContainer.classList.remove('fullscreen');
-                exitFullscreenButton.style.display = 'none'; // 隐藏退出按钮
-                toggleFullscreenButton.textContent = '全屏显示'; // 切换主按钮文本
+                exitFullscreenButton.style.display = 'none';
+                toggleFullscreenButton.textContent = '全屏图表';
             } else {
-                // 当前不是全屏，进行全屏
                 chartContainer.classList.add('fullscreen');
-                exitFullscreenButton.style.display = 'block'; // 显示退出按钮
-                toggleFullscreenButton.textContent = '退出全屏'; // 切换主按钮文本
+                exitFullscreenButton.style.display = 'block';
+                toggleFullscreenButton.textContent = '退出全屏';
             }
-            myChart.resize(); // 调整图表大小
+            myChart.resize();
         }
 
-        // 绑定全屏按钮点击事件
         toggleFullscreenButton.addEventListener('click', () => toggleFullscreen());
-        // 绑定浮动退出全屏按钮点击事件
         exitFullscreenButton.addEventListener('click', () => toggleFullscreen(true));
 
-        // 监听键盘事件，按 ESC 键退出全屏
         document.addEventListener('keydown', (event) => {
             if (event.key === 'Escape' && chartContainer.classList.contains('fullscreen')) {
-                toggleFullscreen(true); // 强制退出全屏
-            }
-        });
-
-        // ECharts 默认全屏事件，当用户点击 ECharts 内部的全屏按钮时触发
-        // 不过我们这里是自定义的全屏，所以这个监听器主要是为了兼容性或调试
-        document.addEventListener('fullscreenchange', () => {
-             // 如果浏览器原生全屏状态改变，且当前不是我们自定义的全屏状态，
-             // 或者用户通过其他方式退出了原生全屏，我们也要同步状态
-            if (!document.fullscreenElement && chartContainer.classList.contains('fullscreen')) {
                 toggleFullscreen(true);
             }
         });
 
+        window.addEventListener('resize', function() {
+            if (myChart) myChart.resize();
+        });
 
-        // Trigger an initial calculation and plot when the page loads
         document.addEventListener('DOMContentLoaded', () => {
             calculateCurvesButton.click();
         });
