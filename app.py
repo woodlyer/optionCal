@@ -120,7 +120,7 @@ def calculate_option_prices():
     data = request.json
     options_data = data.get('options', [])
     
-    risk_free_rate_input = data.get('riskFreeRate', 0.042197)
+    risk_free_rate_input = data.get('riskFreeRate', 0.0375)
     risk_free_rate = float(risk_free_rate_input) 
 
     gld_min_price = 250 # X轴起点
