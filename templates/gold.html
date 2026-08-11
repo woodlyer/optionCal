@@ -368,7 +368,8 @@
 
         .table-responsive {
             overflow-x: auto;
-            max-height: 450px;
+            max-height: calc(100vh - 220px);
+            min-height: 520px;
             overflow-y: auto;
         }
 
@@ -557,7 +558,6 @@
                 <!-- 汇率与参数右侧精简区 -->
                 <div style="display: flex; align-items: center; gap: 10px; font-size: 12px; color: #475569;">
                     <span>汇率: <input type="number" id="paramRate" value="6.74" step="0.0001" style="width: 58px; padding: 2px 4px; font-size: 12px; border: 1px solid #cbd5e1; border-radius: 4px;"></span>
-                    <span>1oz= <input type="number" id="paramOzGram" value="31.1035" step="0.0001" style="width: 62px; padding: 2px 4px; font-size: 12px; border: 1px solid #cbd5e1; border-radius: 4px;">g</span>
                     <span>GLD/XAU= <input type="number" id="paramGLDRatio" value="10.84" step="0.01" style="width: 52px; padding: 2px 4px; font-size: 12px; border: 1px solid #cbd5e1; border-radius: 4px;"></span>
                     <span>溢价: <input type="number" id="paramPremium" value="0.0" step="0.1" style="width: 45px; padding: 2px 4px; font-size: 12px; border: 1px solid #cbd5e1; border-radius: 4px;">%</span>
                     <button class="btn-secondary" style="padding: 2px 8px; font-size: 11px;" onclick="resetDefaults()">重置</button>
@@ -573,7 +573,7 @@
                     <div style="font-size: 12px; color: #64748b;">
                         XAU 起始: <input type="number" id="tblMinXAU" value="3500" style="width: 70px; padding: 2px 6px;">
                         截止: <input type="number" id="tblMaxXAU" value="7000" style="width: 70px; padding: 2px 6px;">
-                        步长: <input type="number" id="tblStepXAU" value="100" style="width: 60px; padding: 2px 6px;">
+                        步长: <input type="number" id="tblStepXAU" value="50" style="width: 60px; padding: 2px 6px;">
                         <button class="btn-secondary" style="padding: 2px 8px; font-size: 12px;" onclick="updateMatrix()">更新对照</button>
                     </div>
                 </div>
@@ -627,7 +627,6 @@
         const inputRMBGram = document.getElementById('inputRMBGram');
 
         const paramRate = document.getElementById('paramRate');
-        const paramOzGram = document.getElementById('paramOzGram');
         const paramGLDRatio = document.getElementById('paramGLDRatio');
         const paramPremium = document.getElementById('paramPremium');
 
@@ -704,14 +703,12 @@
 
             // 参数设置监听
             paramRate.addEventListener('input', updateParams);
-            paramOzGram.addEventListener('input', updateParams);
             paramGLDRatio.addEventListener('input', updateParams);
             paramPremium.addEventListener('input', updateParams);
         }
 
         function resetDefaults() {
             paramRate.value = "6.74";
-            paramOzGram.value = "31.1034768";
             paramGLDRatio.value = "10.84";
             paramPremium.value = "0.0";
             updateParams();
@@ -737,7 +734,7 @@
 
         function updateParams() {
             state.rate = parseFloat(paramRate.value) || 6.74;
-            state.ozGrams = parseFloat(paramOzGram.value) || 31.1034768;
+            state.ozGrams = 31.1034768;
             state.gldRatio = parseFloat(paramGLDRatio.value) || 10.84;
             state.premium = parseFloat(paramPremium.value) || 0.0;
 
