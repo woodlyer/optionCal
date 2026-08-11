@@ -581,31 +581,11 @@
                             </span>
                         </div>
                     </div>
-
-                    <!-- 人民币/公斤 -->
-                    <div class="input-group">
-                        <label for="inputRMBKg">
-                            <span>公斤条金价 (元/公斤)</span>
-                            <span style="color: #059669;">大盘公斤价</span>
-                        </label>
-                        <div class="input-wrapper">
-                            <input type="number" id="inputRMBKg" class="input-field" step="10" value="866780">
-                            <span class="input-unit">元/kg</span>
-                        </div>
-                        <div class="sub-info">1000克黄金人民币价格</div>
-                    </div>
-                </div>
-
-                <!-- 换算核心公式说明 -->
-                <div class="formula-card">
-                    <strong>📐 换算公式逻辑:</strong><br>
-                    • <code>克价(元/克) = XAU(美元/盎司) × 汇率(6.74) ÷ 31.1034768 × (1 + 溢价率)</code><br>
-                    • <code>GLD(美元/股) = XAU(美元/盎司) ÷ 10.84</code>
                 </div>
             </div>
 
-            <!-- 参数设置与测算器 -->
-            <div class="card">
+            <!-- 参数设置 -->
+            <div class="card" style="margin-bottom: 20px;">
                 <div class="card-header">
                     <span class="card-title">⚙️ 汇率与计算参数</span>
                     <button class="btn-secondary" onclick="resetDefaults()">恢复默认参数</button>
@@ -627,40 +607,6 @@
                     <div class="param-item">
                         <label for="paramPremium">国内外溢价率 (%)</label>
                         <input type="number" id="paramPremium" step="0.1" value="0.0">
-                    </div>
-                </div>
-
-                <div style="margin-top: 20px;">
-                    <div class="card-title" style="font-size: 15px; margin-bottom: 12px;">⚖️ 黄金重量与购金成本计算器</div>
-                    <div class="calc-row">
-                        <label style="font-size: 13px; font-weight: 600;">购买/持有数量:</label>
-                        <input type="number" id="calcWeight" value="100" style="width: 100px;">
-                        <select id="calcUnit">
-                            <option value="g">克 (g)</option>
-                            <option value="kg">千克/公斤 (kg)</option>
-                            <option value="oz">金衡盎司 (oz)</option>
-                            <option value="tael_hk">司马两 (37.4284g)</option>
-                            <option value="tael_cn">市两 (50.0g)</option>
-                        </select>
-                    </div>
-
-                    <div class="result-box">
-                        <div class="result-item">
-                            <span class="result-label">折合克数</span>
-                            <span class="result-value" id="resGrams">100.00 g</span>
-                        </div>
-                        <div class="result-item">
-                            <span class="result-label">人民币总价</span>
-                            <span class="result-value" id="resCNY">￥86,678</span>
-                        </div>
-                        <div class="result-item">
-                            <span class="result-label">美元总价</span>
-                            <span class="result-value" id="resUSD">$12,860.24</span>
-                        </div>
-                        <div class="result-item">
-                            <span class="result-label">相当GLD股数</span>
-                            <span class="result-value" id="resGLDShares">34.85 股</span>
-                        </div>
                     </div>
                 </div>
             </div>
@@ -694,7 +640,6 @@
                                 <th>GLD ETF ($/股)</th>
                                 <th>基准克价 (元/克)</th>
                                 <th>含溢价克价 (元/克)</th>
-                                <th>公斤条价格 (元/kg)</th>
                                 <th>100克黄金总价 (元)</th>
                                 <th>1金衡盎司总价 (元)</th>
                             </tr>
@@ -727,7 +672,6 @@
         const inputXAU = document.getElementById('inputXAU');
         const inputGLD = document.getElementById('inputGLD');
         const inputRMBGram = document.getElementById('inputRMBGram');
-        const inputRMBKg = document.getElementById('inputRMBKg');
 
         const paramRate = document.getElementById('paramRate');
         const paramOzGram = document.getElementById('paramOzGram');
@@ -805,27 +749,11 @@
                 }
             });
 
-            inputRMBKg.addEventListener('input', (e) => {
-                const val = parseFloat(e.target.value);
-                if (!isNaN(val) && val > 0) {
-                    const rmbGram = val / 1000;
-                    const mult = (1 + state.premium / 100);
-                    state.xau = (rmbGram * state.ozGrams) / (state.rate * mult);
-                    state.lastSource = 'rmbKg';
-                    highlightActive(inputRMBKg);
-                    updateCalculationsFromXAU();
-                }
-            });
-
             // 参数设置监听
             paramRate.addEventListener('input', updateParams);
             paramOzGram.addEventListener('input', updateParams);
             paramGLDRatio.addEventListener('input', updateParams);
             paramPremium.addEventListener('input', updateParams);
-
-            // 重量计算器监听
-            document.getElementById('calcWeight').addEventListener('input', updateCostCalculator);
-            document.getElementById('calcUnit').addEventListener('change', updateCostCalculator);
         }
 
         function resetDefaults() {
@@ -837,7 +765,7 @@
         }
 
         function highlightActive(element) {
-            [inputXAU, inputGLD, inputRMBGram, inputRMBKg].forEach(el => el.classList.remove('last-modified'));
+            [inputXAU, inputGLD, inputRMBGram].forEach(el => el.classList.remove('last-modified'));
             element.classList.add('last-modified');
         }
 
@@ -846,36 +774,12 @@
             const gld = xau / state.gldRatio;
             const rmbGramBase = (xau * state.rate) / state.ozGrams;
             const rmbGramWithPrem = rmbGramBase * (1 + state.premium / 100);
-            const rmbKg = rmbGramWithPrem * 1000;
 
             if (state.lastSource !== 'xau') inputXAU.value = xau.toFixed(2);
             if (state.lastSource !== 'gld') inputGLD.value = gld.toFixed(2);
             if (state.lastSource !== 'rmbGram') inputRMBGram.value = rmbGramWithPrem.toFixed(2);
-            if (state.lastSource !== 'rmbKg') inputRMBKg.value = rmbKg.toFixed(0);
 
-            updateCostCalculator();
             updateMatrix();
-        }
-
-        function updateCostCalculator() {
-            const weightVal = parseFloat(document.getElementById('calcWeight').value) || 0;
-            const unit = document.getElementById('calcUnit').value;
-
-            let grams = weightVal;
-            if (unit === 'kg') grams = weightVal * 1000;
-            else if (unit === 'oz') grams = weightVal * state.ozGrams;
-            else if (unit === 'tael_hk') grams = weightVal * 37.4284;
-            else if (unit === 'tael_cn') grams = weightVal * 50.0;
-
-            const rmbGram = ((state.xau * state.rate) / state.ozGrams) * (1 + state.premium / 100);
-            const totalCNY = grams * rmbGram;
-            const totalUSD = totalCNY / state.rate;
-            const totalGLDShares = (grams / state.ozGrams) * state.gldRatio;
-
-            document.getElementById('resGrams').innerText = grams.toFixed(2) + ' g';
-            document.getElementById('resCNY').innerText = '￥' + totalCNY.toLocaleString('zh-CN', { maximumFractionDigits: 2 });
-            document.getElementById('resUSD').innerText = '$' + totalUSD.toLocaleString('en-US', { maximumFractionDigits: 2 });
-            document.getElementById('resGLDShares').innerText = totalGLDShares.toFixed(2) + ' 股';
         }
 
         function updateParams() {
@@ -904,7 +808,6 @@
                 const gld = xau / state.gldRatio;
                 const baseGram = (xau * state.rate) / state.ozGrams;
                 const premGram = baseGram * (1 + state.premium / 100);
-                const rmbKg = premGram * 1000;
                 const cost100g = premGram * 100;
                 const costOz = premGram * state.ozGrams;
 
@@ -923,7 +826,6 @@
                     <td style="color: #2563eb;">$${gld.toFixed(2)}</td>
                     <td style="color: #475569;">￥${baseGram.toFixed(2)}</td>
                     <td style="color: #dc2626; font-weight: 700;">￥${premGram.toFixed(2)}</td>
-                    <td style="color: #059669;">￥${Math.round(rmbKg).toLocaleString()}</td>
                     <td>￥${Math.round(cost100g).toLocaleString()}</td>
                     <td>￥${Math.round(costOz).toLocaleString()}</td>
                 `;
