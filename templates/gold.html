@@ -741,8 +741,6 @@
             state.gldRatio = parseFloat(paramGLDRatio.value) || 10.84;
             state.premium = parseFloat(paramPremium.value) || 0.0;
 
-            const subText = document.getElementById('rmbGramSubText');
-            if (subText) subText.innerText = `基于汇率 ${state.rate} (步长: ￥10)`;
             updateCalculationsFromXAU();
         }
 
