@@ -515,99 +515,52 @@
             </div>
         </div>
 
-        <!-- 换算核心与参数 -->
-        <div class="grid-2">
-            <!-- 实时多向换算器 -->
-            <div class="card">
-                <div class="card-header">
-                    <span class="card-title">⚡ 实时多向价格换算</span>
-                    <span style="font-size: 12px; color: #64748b;">修改任意一项，其余项目自动同步</span>
-                </div>
-
-                <div class="converter-grid">
-                    <!-- XAU 伦敦金 -->
-                    <div class="input-group">
-                        <label for="inputXAU">
-                            <span>伦敦金 XAU/USD</span>
-                            <span style="color: #d97706;">国际现货</span>
-                        </label>
-                        <div class="input-wrapper">
-                            <input type="number" id="inputXAU" class="input-field" step="10" value="4000.00">
-                            <span class="input-unit">$/盎司</span>
-                        </div>
-                        <div class="sub-info" style="display: flex; justify-content: space-between; align-items: center; margin-top: 4px;">
-                            <span>1金衡盎司美价 (步长: $10)</span>
-                            <span style="display: flex; gap: 4px;">
-                                <button type="button" onclick="adjustXau(-10)" style="padding: 1px 6px; font-size: 11px; border: 1px solid #cbd5e1; border-radius: 4px; background: #fff; cursor: pointer;">-10</button>
-                                <button type="button" onclick="adjustXau(10)" style="padding: 1px 6px; font-size: 11px; border: 1px solid #d97706; border-radius: 4px; background: #fef3c7; color: #b45309; font-weight: bold; cursor: pointer;">+10</button>
-                            </span>
+        <!-- 单行紧凑型价格换算与参数控制栏 -->
+        <div class="card" style="padding: 10px 16px; margin-bottom: 14px;">
+            <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px;">
+                <!-- 实时换算项 -->
+                <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 14px;">
+                    <!-- 伦敦金 XAU -->
+                    <div style="display: flex; align-items: center; gap: 6px;">
+                        <label for="inputXAU" style="font-weight: 600; font-size: 13px; color: #1e293b; white-space: nowrap;">伦敦金 XAU:</label>
+                        <input type="number" id="inputXAU" step="10" value="4000.00" style="width: 85px; padding: 3px 6px; font-size: 13px; font-weight: 700; color: #d97706; border: 1px solid #cbd5e1; border-radius: 6px;">
+                        <span style="font-size: 12px; color: #64748b;">$/oz</span>
+                        <div style="display: flex; gap: 2px;">
+                            <button type="button" onclick="adjustXau(-10)" style="padding: 1px 5px; font-size: 11px; border: 1px solid #cbd5e1; border-radius: 4px; background: #fff; cursor: pointer;">-10</button>
+                            <button type="button" onclick="adjustXau(10)" style="padding: 1px 5px; font-size: 11px; border: 1px solid #d97706; border-radius: 4px; background: #fef3c7; color: #b45309; font-weight: bold; cursor: pointer;">+10</button>
                         </div>
                     </div>
 
-                    <!-- GLD 黄金ETF -->
-                    <div class="input-group">
-                        <label for="inputGLD">
-                            <span>SPDR GLD ETF</span>
-                            <span style="color: #2563eb;">美股期权标的</span>
-                        </label>
-                        <div class="input-wrapper">
-                            <input type="number" id="inputGLD" class="input-field" step="10" value="368.91">
-                            <span class="input-unit">$/股</span>
-                        </div>
-                        <div class="sub-info" style="display: flex; justify-content: space-between; align-items: center; margin-top: 4px;">
-                            <span>比例 10.84 (步长: $10)</span>
-                            <span style="display: flex; gap: 4px;">
-                                <button type="button" onclick="adjustGld(-10)" style="padding: 1px 6px; font-size: 11px; border: 1px solid #cbd5e1; border-radius: 4px; background: #fff; cursor: pointer;">-10</button>
-                                <button type="button" onclick="adjustGld(10)" style="padding: 1px 6px; font-size: 11px; border: 1px solid #2563eb; border-radius: 4px; background: #eff6ff; color: #1d4ed8; font-weight: bold; cursor: pointer;">+10</button>
-                            </span>
+                    <!-- GLD ETF -->
+                    <div style="display: flex; align-items: center; gap: 6px;">
+                        <label for="inputGLD" style="font-weight: 600; font-size: 13px; color: #1e293b; white-space: nowrap;">GLD ETF:</label>
+                        <input type="number" id="inputGLD" step="10" value="368.91" style="width: 80px; padding: 3px 6px; font-size: 13px; font-weight: 700; color: #2563eb; border: 1px solid #cbd5e1; border-radius: 6px;">
+                        <span style="font-size: 12px; color: #64748b;">$/股</span>
+                        <div style="display: flex; gap: 2px;">
+                            <button type="button" onclick="adjustGld(-10)" style="padding: 1px 5px; font-size: 11px; border: 1px solid #cbd5e1; border-radius: 4px; background: #fff; cursor: pointer;">-10</button>
+                            <button type="button" onclick="adjustGld(10)" style="padding: 1px 5px; font-size: 11px; border: 1px solid #2563eb; border-radius: 4px; background: #eff6ff; color: #1d4ed8; font-weight: bold; cursor: pointer;">+10</button>
                         </div>
                     </div>
 
-                    <!-- 人民币/克 -->
-                    <div class="input-group">
-                        <label for="inputRMBGram">
-                            <span>国内金价 (元/克)</span>
-                            <span style="color: #dc2626;">人民币克价</span>
-                        </label>
-                        <div class="input-wrapper">
-                            <input type="number" id="inputRMBGram" class="input-field" step="10" value="866.78">
-                            <span class="input-unit">元/克</span>
-                        </div>
-                        <div class="sub-info" style="display: flex; justify-content: space-between; align-items: center; margin-top: 4px;">
-                            <span id="rmbGramSubText">基于汇率 6.74 (步长: ￥10)</span>
-                            <span style="display: flex; gap: 4px;">
-                                <button type="button" onclick="adjustRmbGram(-10)" style="padding: 1px 6px; font-size: 11px; border: 1px solid #cbd5e1; border-radius: 4px; background: #fff; cursor: pointer;">-10</button>
-                                <button type="button" onclick="adjustRmbGram(10)" style="padding: 1px 6px; font-size: 11px; border: 1px solid #dc2626; border-radius: 4px; background: #fef2f2; color: #b91c1c; font-weight: bold; cursor: pointer;">+10</button>
-                            </span>
+                    <!-- 国内金价 -->
+                    <div style="display: flex; align-items: center; gap: 6px;">
+                        <label for="inputRMBGram" style="font-weight: 600; font-size: 13px; color: #1e293b; white-space: nowrap;">国内金价:</label>
+                        <input type="number" id="inputRMBGram" step="10" value="866.78" style="width: 80px; padding: 3px 6px; font-size: 13px; font-weight: 700; color: #dc2626; border: 1px solid #cbd5e1; border-radius: 6px;">
+                        <span style="font-size: 12px; color: #64748b;">元/克</span>
+                        <div style="display: flex; gap: 2px;">
+                            <button type="button" onclick="adjustRmbGram(-10)" style="padding: 1px 5px; font-size: 11px; border: 1px solid #cbd5e1; border-radius: 4px; background: #fff; cursor: pointer;">-10</button>
+                            <button type="button" onclick="adjustRmbGram(10)" style="padding: 1px 5px; font-size: 11px; border: 1px solid #dc2626; border-radius: 4px; background: #fef2f2; color: #b91c1c; font-weight: bold; cursor: pointer;">+10</button>
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <!-- 参数设置 -->
-            <div class="card" style="margin-bottom: 20px;">
-                <div class="card-header">
-                    <span class="card-title">⚙️ 汇率与计算参数</span>
-                    <button class="btn-secondary" onclick="resetDefaults()">恢复默认参数</button>
-                </div>
-
-                <div class="params-bar">
-                    <div class="param-item">
-                        <label for="paramRate">USD/CNY 汇率</label>
-                        <input type="number" id="paramRate" step="0.0001" value="6.74">
-                    </div>
-                    <div class="param-item">
-                        <label for="paramOzGram">1金衡盎司 (克)</label>
-                        <input type="number" id="paramOzGram" step="0.0000001" value="31.1034768">
-                    </div>
-                    <div class="param-item">
-                        <label for="paramGLDRatio">GLD/XAU 比例</label>
-                        <input type="number" id="paramGLDRatio" step="0.01" value="10.84">
-                    </div>
-                    <div class="param-item">
-                        <label for="paramPremium">国内外溢价率 (%)</label>
-                        <input type="number" id="paramPremium" step="0.1" value="0.0">
-                    </div>
+                <!-- 汇率与参数右侧精简区 -->
+                <div style="display: flex; align-items: center; gap: 10px; font-size: 12px; color: #475569;">
+                    <span>汇率: <input type="number" id="paramRate" value="6.74" step="0.0001" style="width: 58px; padding: 2px 4px; font-size: 12px; border: 1px solid #cbd5e1; border-radius: 4px;"></span>
+                    <span>1oz= <input type="number" id="paramOzGram" value="31.1035" step="0.0001" style="width: 62px; padding: 2px 4px; font-size: 12px; border: 1px solid #cbd5e1; border-radius: 4px;">g</span>
+                    <span>GLD/XAU= <input type="number" id="paramGLDRatio" value="10.84" step="0.01" style="width: 52px; padding: 2px 4px; font-size: 12px; border: 1px solid #cbd5e1; border-radius: 4px;"></span>
+                    <span>溢价: <input type="number" id="paramPremium" value="0.0" step="0.1" style="width: 45px; padding: 2px 4px; font-size: 12px; border: 1px solid #cbd5e1; border-radius: 4px;">%</span>
+                    <button class="btn-secondary" style="padding: 2px 8px; font-size: 11px;" onclick="resetDefaults()">重置</button>
                 </div>
             </div>
         </div>
@@ -788,7 +741,8 @@
             state.gldRatio = parseFloat(paramGLDRatio.value) || 10.84;
             state.premium = parseFloat(paramPremium.value) || 0.0;
 
-            document.getElementById('rmbGramSubText').innerText = `基于汇率 ${state.rate} (步长: ￥10)`;
+            const subText = document.getElementById('rmbGramSubText');
+            if (subText) subText.innerText = `基于汇率 ${state.rate} (步长: ￥10)`;
             updateCalculationsFromXAU();
         }
 
