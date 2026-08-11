@@ -1,5 +1,5 @@
 {
     "USERNAME": "admin",
-    "PASSWORD": "password",
-    "SECRET_KEY": "your_very_secret_key_here_change_this_in_production"
+    "PASSWORD": "op23123",
+    "SECRET_KEY": "your_random_secret_string123123"
 }
